@@ -29,7 +29,7 @@ const convertEndpoint = (endpoint) => {
   return result
 }
 
-const getRecipesFromPages = async (endpoint, recipeType) => {
+const scrap = async (endpoint, recipeType) => {
   try {
     await connect()
 
@@ -37,9 +37,9 @@ const getRecipesFromPages = async (endpoint, recipeType) => {
 
     const mainPage = await rp(url + convertedEndpoint)
 
-    //await getRecipeFromPage(mainPage, 1, 'dinner')
+    await getRecipeFromPage(mainPage, 0, 'dinner')
 
-    await getRecipesFromPage(mainPage, recipeType)
+    //await getRecipesFromPage(mainPage, recipeType)
 
     // const endpoints = getEndpointsFromPage(mainPage, endpoint);
     // for (let i = 0; i < endpoints.length; i++) {
@@ -63,26 +63,14 @@ const endpoints = [
   { value: '/dania-głowne-z-ryb-owocow-morza', recipeType: 'dinner' },
 ]
 
-const start = () => {
-  // setInterval(() => {
-  endpoints.forEach((endpoint, index) => {
-    setTimeout(() => {
-      console.log('WYKONUJE SIE: ' + endpoint.value + '...')
-      getRecipesFromPages(endpoint.value, endpoint.recipeType)
-    }, 60000 * 20 * (index + 1))
-  })
-  // }, 60000 * 60)
-}
-
 const test = () => {
-  getRecipesFromPages('/dania-głowne-z-ryb-owocow-morza', 'dinner')
+  setTimeout(() => {
+    scrap('/desery', 'desserts')
+  }, 1000 * 60 * 5)
+
+  setTimeout(() => {
+    scrap('/dania-głowne-z-miesa', 'meat_dish')
+  }, 1000 * 60 * 10)
 }
 
 test()
-
-//start()
-
-//getRecipesFromPages('/makarony-i-dania-z-ryzu', 'dinner')
-//getRecipesFromPages("/dania-głowne-z-miesa", "dinner");
-//getRecipesFromPages("/zupy", "dinner");
-//getRecipesFromPages('/inne-dania-głowne', 'dinner')
