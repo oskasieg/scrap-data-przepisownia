@@ -86,6 +86,12 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
       // dodawanie produktow do bazy
       try {
         const products = await Product.find()
+
+        if (!nutrients) {
+          console.log('Nie udalo pobrac sie skladnikow z Nutritionix.')
+          continue
+        }
+
         for (let i = 0; i < nutrients.foods.length; i++) {
           const item = nutrients.foods[i]
           const translatedName = await translate(item.food_name, {
@@ -162,7 +168,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
                 ' skladnik: ' +
                 findedProduct.name +
                 ' (' +
-                recipeIngredients[i] +
+                recipeIngredients[i].name +
                 ')'
             )
 

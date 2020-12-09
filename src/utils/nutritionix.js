@@ -9,7 +9,7 @@ const getProductsByQuery = async (query) => {
       {
         headers: {
           'x-app-id': '1a3a6164',
-          'x-app-key': '4267d03f7ae5b8bd0fac24de34278437',
+          'x-app-key': '25a97ea9af86a02db86bfd07386a2225',
         },
       }
     )
@@ -31,7 +31,7 @@ const getNutrientsFromString = async (ingr) => {
         headers: {
           'Content-Type': 'application/json',
           'x-app-id': '1a3a6164',
-          'x-app-key': '4267d03f7ae5b8bd0fac24de34278437',
+          'x-app-key': '25a97ea9af86a02db86bfd07386a2225',
         },
         data: {
           query: translatedIngr.text,
