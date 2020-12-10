@@ -163,7 +163,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
               ' skladnik: ' +
               findedProduct.name +
               ' (' +
-              recipeIngredients[i] +
+              recipeIngredients[i].name +
               ')'
           )
 
@@ -340,8 +340,8 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       values: recipeValues,
       number_of_portions: numberOfPortions,
     }
-    //await Recipe.create(recipe);
-    console.log(recipe)
+    await Recipe.create(recipe)
+    //console.log(recipe)
   } catch (e) {
     console.error(e)
   }

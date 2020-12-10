@@ -37,9 +37,9 @@ const scrap = async (endpoint, recipeType) => {
 
     const mainPage = await rp(url + convertedEndpoint)
 
-    //await getRecipeFromPage(mainPage, 0, 'dinner')
+    await getRecipeFromPage(mainPage, 0, 'dinner')
 
-    await getRecipesFromPage(mainPage, recipeType)
+    //await getRecipesFromPage(mainPage, recipeType)
 
     // const endpoints = getEndpointsFromPage(mainPage, endpoint);
     // for (let i = 0; i < endpoints.length; i++) {
@@ -56,7 +56,7 @@ const scrap = async (endpoint, recipeType) => {
 const endpoints = [
   { value: '/makarony-i-dania-z-ryzu', recipeType: 'dinner' },
   { value: '/dania-głowne-z-miesa', recipeType: 'dinner' },
-  // { value: '/zupy', recipeType: 'dinner' },
+  { value: '/zupy', recipeType: 'dinner' },
   { value: '/przystawkisałatki', recipeType: 'dinner' },
   { value: '/inne-dania-głowne', recipeType: 'dinner' },
   { valie: '/desery', recipeType: 'dinner' },

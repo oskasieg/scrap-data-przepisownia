@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const mongoose_fuzzy_searching = require("mongoose-fuzzy-searching");
+const mongoose = require('mongoose')
+const mongoose_fuzzy_searching = require('mongoose-fuzzy-searching')
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -35,10 +35,10 @@ const productSchema = new mongoose.Schema({
   unit: String,
   pieces: Number,
   type: String,
-});
+})
 
-productSchema.plugin(mongoose_fuzzy_searching, { fields: ["name"] });
+productSchema.plugin(mongoose_fuzzy_searching, { fields: ['name'] })
 
-const Product = mongoose.model("product", productSchema);
+const Product = mongoose.model('product', productSchema)
 
-module.exports = Product;
+module.exports = Product
