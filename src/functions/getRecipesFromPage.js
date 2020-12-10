@@ -31,7 +31,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
       console.log('\n\nDodawanie przepisu: ' + recipeName + '...')
 
       // opis
-      let recipeDescription = recipeName.toLowerCase()
+      let recipeDescription = recipeName[0].toUpperCase() + recipeName.slice(1)
 
       // skladniki
       const ingredientSection = $('#ingredient-section', content)

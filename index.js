@@ -37,9 +37,9 @@ const scrap = async (endpoint, recipeType) => {
 
     const mainPage = await rp(url + convertedEndpoint)
 
-    await getRecipeFromPage(mainPage, 0, 'dinner')
+    //await getRecipeFromPage(mainPage, 0, 'dinner')
 
-    //await getRecipesFromPage(mainPage, recipeType)
+    await getRecipesFromPage(mainPage, recipeType)
 
     // const endpoints = getEndpointsFromPage(mainPage, endpoint);
     // for (let i = 0; i < endpoints.length; i++) {
@@ -54,17 +54,21 @@ const scrap = async (endpoint, recipeType) => {
 
 // ENDPOINTY:
 const endpoints = [
-  { value: '/makarony-i-dania-z-ryzu', recipeType: 'dinner' },
-  { value: '/dania-głowne-z-miesa', recipeType: 'dinner' },
-  { value: '/zupy', recipeType: 'dinner' },
-  { value: '/przystawkisałatki', recipeType: 'dinner' },
-  { value: '/inne-dania-głowne', recipeType: 'dinner' },
-  { valie: '/desery', recipeType: 'dinner' },
-  { value: '/dania-głowne-z-ryb-owocow-morza', recipeType: 'dinner' },
+  { value: '/makarony-i-dania-z-ryzu', recipeType: 'pasta_rice' },
+  { value: '/dania-głowne-z-miesa', recipeType: 'meat_dish' },
+  { value: '/zupy', recipeType: 'soup' },
+  { value: '/przystawkisałatki', recipeType: 'appetizer_salad' },
+  { value: '/inne-dania-głowne', recipeType: 'other_dish' },
+  { valie: '/desery', recipeType: 'lunch' },
+  { value: '/dania-głowne-z-ryb-owocow-morza', recipeType: 'fish_dish' },
+  { value: '/dania-głowne-z-warzyw', recipeType: 'vegetable_dish' },
+  { value: '/chleby-bułki', recipeType: 'bread' },
+  { value: '/napoje', recipeType: 'drink' },
+  { value: '/słone-wypieki', recipeType: 'salt_bread' },
 ]
 
 const test = () => {
   scrap('/desery', 'dessert')
 }
 
-test()
+//test()

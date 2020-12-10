@@ -30,7 +30,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
     console.log('Dodaje przepis: ' + recipeName)
 
     // opis
-    let recipeDescription = recipeName.toLowerCase()
+    let recipeDescription = recipeName[0].toUpperCase() + recipeName.slice(1)
 
     // skladniki
     const ingredientSection = $('#ingredient-section', content)
@@ -127,7 +127,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
         }
 
         if (!productExist) {
-          console.log('dodaje produkt')
+          console.log('Dodaje produkt: ' + product.name)
           await Product.create(product)
           products.push(product)
         }
@@ -218,6 +218,8 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
         console.error(e)
       }
     }
+
+    const recipeFilteredIngredients = recipeIngredients
 
     // wyliczenie wartosci odzywczych przepisu
     const recipeValues = {
@@ -332,7 +334,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       name: recipeName,
       description: recipeDescription,
       steps: recipeFilteredSteps,
-      products: recipeIngredients,
+      products: recipeFilteredIngredients,
       time_min: recipeTimeMin > 0 ? recipeTimeMin : undefined,
       type: recipeType,
       image: recipeImage,
