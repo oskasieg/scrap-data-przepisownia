@@ -152,8 +152,6 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
           .replace(',', '')
           .replace('%', '')
           .replace('g', '')
-          .replace('z', '')
-          .replace('i', '')
           .replace('/', '')
           .trim()
 
@@ -218,13 +216,29 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
               ...recipeIngredients[i],
               name: recipeIngredientName,
               values: calculatedIngredientValues,
+              values_per_100: findedProduct.values_per_100,
               original_name: findedProduct.name,
+            }
+
+            if (weight) {
+              recipeIngredients[i]['unit'] = 'grams'
+              recipeIngredients[i]['weight'] = weight
+            } else if (ammount) {
+              recipeIngredients[i]['unit'] = 'pieces'
+              recipeIngredients[i]['pieces'] = ammount
             }
           }
         } catch (e) {
           console.error(e)
         }
       }
+
+      const recipeFilteredIngredients = recipeIngredients.filter(
+        (recipeIngredient) => {
+          if (recipeIngredient.name === '') return false
+          return true
+        }
+      )
 
       // wyliczenie wartosci odzywczych przepisu
       const recipeValues = {
@@ -302,7 +316,11 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
       for (let i = 0; i < recipeSteps.length; i++) {
         if (recipeSteps[i] === undefined) continue
 
-        recipeSteps[i] = recipeSteps[i].replace('\n', '').replace(/\d\./, '')
+        recipeSteps[i] = recipeSteps[i]
+          .replace('\n', '')
+          .replace(/\d\./, '')
+          .replace('*', '')
+
         recipeMappedSteps.push({ name: recipeSteps[i].trim() })
       }
 
@@ -341,7 +359,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
         description:
           recipeDescription[0].toUpperCase() + recipeDescription.slice(1),
         steps: recipeFilteredSteps,
-        products: recipeIngredients,
+        products: recipeFilteredIngredients,
         time_min: recipeTimeMin > 0 ? recipeTimeMin : undefined,
         type: recipeType,
         image: recipeImage,

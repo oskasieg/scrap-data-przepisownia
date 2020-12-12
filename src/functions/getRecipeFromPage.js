@@ -144,8 +144,6 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
         .replace(',', '')
         .replace('%', '')
         .replace('g', '')
-        .replace('z', '')
-        .replace('i', '')
         .replace('/', '')
         .replace(/^•/, '')
         .trim()
@@ -153,6 +151,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       if (recipeIngredients[i].name === '') continue
 
       try {
+        console.log(productName)
         const findedProducts = await Product.fuzzySearch(productName)
         const findedProduct = findedProducts[0]
 
@@ -172,6 +171,8 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
             .trim()
 
           const calculatedIngredientValues = {}
+          let weight
+          let ammount
           if (
             recipeIngredientName.indexOf(' g ') > 0 ||
             recipeIngredientName.indexOf(' ml ') > 0 ||
@@ -179,7 +180,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
             recipeIngredientName.indexOf(' gramow') > 0 ||
             recipeIngredientName.indexOf(' gram ') > 0
           ) {
-            const weight = parseInt(recipeIngredientName)
+            weight = parseInt(recipeIngredientName)
             let p = weight / 100
 
             calculatedIngredientValues.kcal =
@@ -192,7 +193,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
               Math.round(findedProduct.values_per_100.carbohydrates * p * 100) /
               100
           } else {
-            let ammount = parseFloat(recipeIngredientName)
+            ammount = parseFloat(recipeIngredientName)
             if (ammount === 0 || Number.isNaN(ammount)) {
               ammount = 1
             }
@@ -211,7 +212,16 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
             ...recipeIngredients[i],
             name: recipeIngredientName,
             values: calculatedIngredientValues,
+            values_per_100: findedProduct.values_per_100,
             original_name: findedProduct.name,
+          }
+
+          if (weight) {
+            recipeIngredients[i]['unit'] = 'grams'
+            recipeIngredients[i]['weight'] = weight
+          } else if (ammount) {
+            recipeIngredients[i]['unit'] = 'pieces'
+            recipeIngredients[i]['pieces'] = ammount
           }
         }
       } catch (e) {
@@ -219,7 +229,12 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       }
     }
 
-    const recipeFilteredIngredients = recipeIngredients
+    const recipeFilteredIngredients = recipeIngredients.filter(
+      (recipeIngredient) => {
+        if (recipeIngredient.name === '') return false
+        return true
+      }
+    )
 
     // wyliczenie wartosci odzywczych przepisu
     const recipeValues = {
@@ -296,7 +311,10 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
     for (let i = 0; i < recipeSteps.length; i++) {
       if (recipeSteps[i] === undefined) continue
 
-      recipeSteps[i] = recipeSteps[i].replace('\n', '').replace(/\d\./, '')
+      recipeSteps[i] = recipeSteps[i]
+        .replace('\n', '')
+        .replace(/\d\./, '')
+        .replace('*', '')
       recipeMappedSteps.push({ name: recipeSteps[i].trim() })
     }
 
@@ -343,7 +361,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       number_of_portions: numberOfPortions,
     }
     await Recipe.create(recipe)
-    //console.log(recipe)
+    //console.log(recipe.products)
   } catch (e) {
     console.error(e)
   }

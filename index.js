@@ -37,15 +37,19 @@ const scrap = async (endpoint, recipeType) => {
 
     const mainPage = await rp(url + convertedEndpoint)
 
-    //await getRecipeFromPage(mainPage, 0, 'dinner')
+    await getRecipeFromPage(mainPage, 1, 'dinner')
 
-    await getRecipesFromPage(mainPage, recipeType)
+    console.log('DODAJE PRZEPISY z ' + endpoint + ' - strona 1')
 
-    // const endpoints = getEndpointsFromPage(mainPage, endpoint);
+    //await getRecipesFromPage(mainPage, recipeType)
+
+    // const endpoints = getEndpointsFromPage(mainPage, endpoint)
     // for (let i = 0; i < endpoints.length; i++) {
-    //   const anotherPage = await rp(url + endpoints[i]);
-    //   await getRecipesFromOnePage(anotherPage, recipeType);
+    //   const anotherPage = await rp(url + endpoints[i])
+    //   await getRecipesFromOnePage(anotherPage, recipeType)
     // }
+
+    console.log('\n\nZAONCZONO DODAWAC PRZEPISY Z  ' + endpoint + ' - strona 1')
   } catch (e) {
     console.error(e)
   }
@@ -68,7 +72,7 @@ const endpoints = [
 ]
 
 const test = () => {
-  scrap('/desery', 'dessert')
+  scrap(endpoints[2].value, endpoints[2].recipeType)
 }
 
-//test()
+test()
