@@ -32,6 +32,8 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
 
       // opis
       let recipeDescription = recipeName[0].toUpperCase() + recipeName.slice(1)
+      recipeDescription +=
+        '.\n Przepis został zaimportowany ze strony www.przepisownia.pl'
 
       // skladniki
       const ingredientSection = $('#ingredient-section', content)
@@ -58,7 +60,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
             continue
           }
 
-          while (result[i] !== ' ' && result[i] !== ',') {
+          while (result[i] !== ' ' /*&& result[i] !== ','*/) {
             word += result[i]
             i++
           }
@@ -70,17 +72,181 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
         return { name: result }
       })
 
+      const recipeFixedIngredients = []
+      for (let i = 0; i < recipeIngredients.length; i++) {
+        if (recipeIngredients[i].name === '') continue
+        if (recipeIngredients[i].name.indexOf(':') > 0) continue
+
+        let productName = recipeIngredients[i].name
+          .replace(/\d+/g, '')
+          .replace(
+            /łyżeczka|łyżek|łyżeczek|łyżeczki|łyżka|łyżki|kostka|szczypty|szczypta/,
+            ''
+          )
+          .replace(/opakowanie|woreczki|ugotowane|ugotowany|ugotowana/, '')
+          .replace(
+            /obrana|opakowanie|opakowania|opakowań|obranych|obranej|obrane|obrana|obrany/,
+            ''
+          )
+          .replace(
+            /ziarenko|ziarenka|ziarenek|obranych|gorącej|gorącego|gorąca|gorący/,
+            ''
+          )
+          .replace(
+            /poszatkowanej|poszatkowanego|poszatkowane|opcjonalnie|roztrzepane/,
+            ''
+          )
+          .replace(
+            /pęczek|pęczka|kilka|płaskich|czubate|czubata|czubatych|płaskie|czubatej/,
+            ''
+          )
+          .replace(/ulubione/, '')
+          .replace('%', '')
+          .replace(' g ', '')
+          .replace(' i ', '')
+          .replace('/', '')
+          .replace(/^•/, '')
+          .replace(',', '')
+          .replace(' soli', 'sól')
+          .replace('mąki', 'mąka')
+          .replace('Pora', 'por')
+          .replace('pora', 'por')
+          .replace('UHT', '')
+          .replace('\n', '')
+          .replace('-', '')
+          .trim()
+
+        if (productName.indexOf('(') > 0) {
+          productName =
+            productName.substr(0, productName.indexOf('(')) +
+            productName.substr(productName.indexOf(')') + 1)
+        }
+
+        if (productName.indexOf('(') === 0) {
+          productName = productName.substr(productName.indexOf(')') + 1)
+        }
+
+        if (productName.indexOf(' pokroj') > 0) {
+          productName = productName.substr(0, productName.indexOf(' pokroj'))
+        }
+
+        if (productName.indexOf(' ja użył') > 0) {
+          productName = productName.substr(0, productName.indexOf(' ja użył'))
+        }
+
+        if (productName.indexOf(' na ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' na '))
+        }
+
+        if (productName.indexOf(' o ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' o '))
+        }
+
+        if (productName.indexOf(' min ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' o '))
+        }
+
+        if (productName.indexOf(' posiek') > 0) {
+          productName = productName.substr(0, productName.indexOf(' posiek'))
+        }
+
+        if (productName.indexOf(' przekroj') > 0) {
+          productName = productName.substr(0, productName.indexOf(' przekroj'))
+        }
+
+        if (productName.indexOf(' porwa') > 0) {
+          productName = productName.substr(0, productName.indexOf(' porwa'))
+        }
+
+        if (productName.indexOf(' ugotow') > 0) {
+          productName = productName.substr(0, productName.indexOf(' ugotow'))
+        }
+
+        if (productName.indexOf(' gorąc') > 0) {
+          productName = productName.substr(0, productName.indexOf(' gorąc'))
+        }
+
+        if (productName.indexOf(' do ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' do '))
+        }
+
+        if (productName.indexOf(' w ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' w '))
+        }
+
+        if (productName.indexOf(' np') > 0) {
+          productName = productName.substr(0, productName.indexOf(' np'))
+        }
+
+        if (productName.indexOf(' plus ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' plus '))
+        }
+
+        if (productName.indexOf(' bez ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' bez '))
+        }
+
+        if (productName.indexOf(' lub ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' lub '))
+        }
+
+        if (productName.indexOf(' or ') > 0) {
+          productName = productName.substr(0, productName.indexOf(' or '))
+        }
+
+        if (productName.indexOf(' rozdrob') > 0) {
+          productName = productName.substr(0, productName.indexOf(' rozdrob'))
+        }
+
+        if (productName.indexOf(' śwież') > 0) {
+          productName = productName.substr(0, productName.indexOf(' śwież'))
+        }
+
+        let words = productName.split(' ')
+        words = words.filter((word) => {
+          if (word === '' || word === ',') return false
+          return true
+        })
+        words = words.map((word) => {
+          let result = word
+          if (word === 'soli') result = 'sól'
+          if (word === 'mąki') result = 'mąka'
+          if (word === /[P|p]ora/) result = 'por'
+          if (word === 'soli') result = 'sól'
+
+          // if (word[word.length - 1] === 'y' || word[word.length - 1] === 'i') {
+          //   result = word.substr(0, word.length - 1) + 'a'
+          // }
+
+          if (word[word.length - 1] === ',' || word[word.length - 1] === '.') {
+            result = word.substr(0, word.length - 1)
+          }
+
+          // if (word.substr(word.length - 2) === 'ów') {
+          //   result = word.substr(0, word.length - 2)
+          // }
+
+          // if (word.substr(word.length - 2) === 'ej') {
+          //   result = word.substr(0, word.length - 2) + 'a'
+          // }
+
+          return result
+        })
+
+        productName = words.join(' ')
+
+        recipeFixedIngredients.push({ name: productName })
+      }
+
       // tworzenie zapytania do Nutritionix
       const productStrings = []
-      for (let i = 0; i < recipeIngredients.length; i++) {
-        const name = recipeIngredients[i].name
-          .replace(/\d+/g, '')
-          .replace('g', '')
-          .replace(',')
-          .trim()
+      for (let i = 0; i < recipeFixedIngredients.length; i++) {
+        const name = recipeFixedIngredients[i].name
         productStrings.push(name)
       }
       const ingr = productStrings.join(', ')
+      //console.log(ingr)
+      //const nutrients = undefined
       const nutrients = await getNutrientsFromString(ingr)
 
       // dodawanie produktow do bazy
@@ -98,6 +264,13 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
             to: 'pl',
           })
 
+          if (translatedName.text[translatedName.text.length - 1] === '.') {
+            translatedName.text = translatedName.text.substr(
+              0,
+              translatedName.text.length - 1
+            )
+          }
+
           const product = {
             name:
               translatedName.text.charAt(0).toUpperCase() +
@@ -113,7 +286,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
             createdAt: new Date(),
             unit: 'grams',
             pieces: 1,
-            type: 'other',
+            type: 'nutritionix',
           }
 
           let values_per_100 = {}
@@ -145,15 +318,8 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
       }
 
       // szukanie produktow z bazy i przypiswanie wartosci skladnikom
-      for (let i = 0; i < recipeIngredients.length; i++) {
-        const productName = recipeIngredients[i].name
-          .replace(/\d+/g, '')
-          .replace(/łyżeczka|łyżeczki|łyżka|łyżki|kostka|szczypty|szczypta/, '')
-          .replace(',', '')
-          .replace('%', '')
-          .replace('g', '')
-          .replace('/', '')
-          .trim()
+      for (let i = 0; i < recipeFixedIngredients.length; i++) {
+        let productName = recipeFixedIngredients[i].name
 
         try {
           const findedProducts = await Product.fuzzySearch(productName)
@@ -161,21 +327,21 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
 
           if (findedProduct) {
             console.log(
-              i +
-                1 +
-                ' skladnik: ' +
+              recipeFixedIngredients[i].name +
+                ' - ' +
+                productName +
+                ' - ' +
                 findedProduct.name +
-                ' (' +
-                recipeIngredients[i].name +
-                ')'
+                '\n'
             )
-
             const recipeIngredientName = recipeIngredients[i].name.replace(
               /^•/,
               ''
             )
 
             const calculatedIngredientValues = {}
+            let weight = 0
+            let ammount = 0
             if (
               recipeIngredientName.indexOf(' g ') > 0 ||
               recipeIngredientName.indexOf(' ml ') > 0 ||
@@ -183,7 +349,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
               recipeIngredientName.indexOf(' gramow') > 0 ||
               recipeIngredientName.indexOf(' gram ') > 0
             ) {
-              const weight = parseInt(recipeIngredientName)
+              weight = parseInt(recipeIngredientName)
               let p = weight / 100
 
               calculatedIngredientValues.kcal =
@@ -197,7 +363,7 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
                   findedProduct.values_per_100.carbohydrates * p * 100
                 ) / 100
             } else {
-              let ammount = parseFloat(recipeIngredientName)
+              ammount = parseFloat(recipeIngredientName)
               if (ammount === 0 || Number.isNaN(ammount)) {
                 ammount = 1
               }
@@ -220,10 +386,10 @@ const getRecipesFromPage = async (mainPage, recipeType) => {
               original_name: findedProduct.name,
             }
 
-            if (weight) {
+            if (weight > 0) {
               recipeIngredients[i]['unit'] = 'grams'
               recipeIngredients[i]['weight'] = weight
-            } else if (ammount) {
+            } else if (ammount > 0) {
               recipeIngredients[i]['unit'] = 'pieces'
               recipeIngredients[i]['pieces'] = ammount
             }
