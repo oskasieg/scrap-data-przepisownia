@@ -9,6 +9,8 @@ const Recipe = require('../models/recipe.model')
 
 const translate = require('@vitalets/google-translate-api')
 
+const Fuse = require('fuse.js')
+
 // Pobiera pobiera przepis ze strony
 const getRecipeFromPage = async (mainPage, index, recipeType) => {
   try {
@@ -34,12 +36,104 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
     recipeDescription +=
       '.\n Przepis został zaimportowany ze strony www.przepisownia.pl'
 
+    const tm = $(
+      '.appliances-list > ul > li > .media-body > .media-heading',
+      content
+    )
+
+    if (tm['0'].children && tm['0'].children[0].data) {
+      recipeDescription +=
+        '.\nPrzepis jest tworzony dla urządzenia ' + tm['0'].children[0].data
+    }
+
+    // zdjecie
+    const recipeImage = $('.recipe-main-image', content)['0'].attribs.src
+
+    // czas wykonania
+    const additionalInfo = $('.additional-info > ul > li h5', content)
+    let recipeTimeMin = 0
+    if (additionalInfo[0].children.length > 0) {
+      recipeTimeMinString = additionalInfo[0].children[0].data
+      // jezeli podany w godzinach
+      if (recipeTimeMinString[1] === 'h') {
+        recipeTimeMin += parseInt(recipeTimeMinString[0]) * 60
+        recipeTimeMin += parseInt(recipeTimeMinString.slice(2))
+      } else {
+        recipeTimeMin = parseInt(recipeTimeMinString)
+      }
+    }
+
+    // pobranie ilosci porcji
+    const portions = $('span[itemprop="recipeYield"]', content)
+    let numberOfPortions = 1
+
+    if (portions['0']) {
+      numberOfPortions = parseInt(portions['0'].children[0].data)
+      if (!numberOfPortions) {
+        numberOfPortions = 1
+      }
+    }
+
+    // lista krokow
+    const recipeSteps = []
+    const stepsLi = $('.steps-list > div > li > span > ol > li', content)
+
+    for (let i = 0; i < stepsLi.length; i++) {
+      recipeSteps.push(stepsLi[i].children[0].data)
+    }
+    const stepsLi2 = $('.steps-list > div > li > span > p', content)
+
+    for (let i = 0; i < stepsLi2.length; i++) {
+      recipeSteps.push(stepsLi2[i].children[0].data)
+    }
+    const stepsP = $('.steps-list > div > li p ', content)
+    for (let i = 0; i < stepsP.length; i++) {
+      recipeSteps.push(stepsP[i].children[0].data)
+    }
+
+    const recipeMappedSteps = []
+    for (let i = 0; i < recipeSteps.length; i++) {
+      if (recipeSteps[i] === undefined) continue
+
+      recipeSteps[i] = recipeSteps[i]
+        .replace('\n', '')
+        .replace(/\d\./, '')
+        .replace('*', '')
+      recipeMappedSteps.push({ name: recipeSteps[i].trim() })
+    }
+
+    const recipeFilteredSteps = recipeMappedSteps.filter((step) => {
+      if (step.name === 'Wpisz tutaj kroki przygotowania przepisu') {
+        return false
+      }
+
+      let empty = true
+      for (i = 0; i < step.name.length; i++) {
+        if (/[a-zA-z]/.test(step.name[i])) {
+          empty = false
+        }
+      }
+      if (empty) {
+        return false
+      }
+
+      return true
+    })
+
     // skladniki
     const ingredientSection = $('#ingredient-section', content)
     const li = $('ul > li', ingredientSection)
     let recipeIngredients = []
+
     for (let i = 0; i < li.length; i++) {
-      const data = li[i].children[0].data
+      const recipeIngredientParts = []
+      li[i].children.forEach((el) => {
+        recipeIngredientParts.push(el.children[0].data.trim())
+      })
+
+      const data = recipeIngredientParts.join(' ')
+
+      //const data = li[i].children[0].data
       recipeIngredients.push({ name: data })
     }
 
@@ -51,31 +145,28 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       result = result.replace('\n', '')
       result = result.replace('\n', '')
 
-      let words = []
-      for (let i = 0; i < result.length; i++) {
-        word = ''
+      // let words = []
+      // for (let i = 0; i < result.length; i++) {
+      //   word = ''
 
-        if (result[i] === ' ') {
-          continue
-        }
+      //   if (result[i] === ' ') {
+      //     continue
+      //   }
 
-        while (result[i] !== ' ' /*&& result[i] !== ','*/) {
-          word += result[i]
-          i++
-        }
+      //   while (result[i] !== ' ') {
+      //     word += result[i]
+      //     i++
+      //   }
 
-        words.push(word)
-      }
-      result = words.join(' ')
+      //   words.push(word)
+      // }
+      // result = words.join(' ')
 
       return { name: result }
     })
 
     const recipeFixedIngredients = []
     for (let i = 0; i < recipeIngredients.length; i++) {
-      if (recipeIngredients[i].name === '') continue
-      if (recipeIngredients[i].name.indexOf(':') > 0) continue
-
       let productName = recipeIngredients[i].name
         .replace(/\d+/g, '')
         .replace(
@@ -87,6 +178,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
           /obrana|opakowanie|opakowania|opakowań|obranych|obranej|obrane|obrana|obrany/,
           ''
         )
+        .replace(/ciepłej|ciepłych|ciepłego/, '')
         .replace(
           /ziarenko|ziarenka|ziarenek|obranych|gorącej|gorącego|gorąca|gorący/,
           ''
@@ -113,6 +205,8 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
         .replace('UHT', '')
         .replace('\n', '')
         .replace('-', '')
+        .replace('MT', '')
+        .replace('po ', '')
         .trim()
 
       if (productName.indexOf('(') > 0) {
@@ -209,6 +303,14 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
         productName = productName.substr(0, productName.indexOf(' śwież'))
       }
 
+      if (productName.indexOf(' wędz') > 0) {
+        productName = productName.substr(0, productName.indexOf(' wędz'))
+      }
+
+      if (productName.indexOf(' miel') > 0) {
+        productName = productName.substr(0, productName.indexOf(' miel'))
+      }
+
       let words = productName.split(' ')
       words = words.filter((word) => {
         if (word === '' || word === ',') return false
@@ -217,25 +319,20 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       words = words.map((word) => {
         let result = word
         if (word === 'soli') result = 'sól'
+        if (word === 'jajek') result = 'jajko'
+        if (word === 'wody') result = 'woda'
         if (word === 'mąki') result = 'mąka'
         if (word === /[P|p]ora/) result = 'por'
         if (word === 'soli') result = 'sól'
-
-        // if (word[word.length - 1] === 'y' || word[word.length - 1] === 'i') {
-        //   result = word.substr(0, word.length - 1) + 'a'
-        // }
+        if (word === 'pieczarek') result = 'grzyby'
 
         if (word[word.length - 1] === ',' || word[word.length - 1] === '.') {
           result = word.substr(0, word.length - 1)
         }
 
-        // if (word.substr(word.length - 2) === 'ów') {
-        //   result = word.substr(0, word.length - 2)
-        // }
-
-        // if (word.substr(word.length - 2) === 'ej') {
-        //   result = word.substr(0, word.length - 2) + 'a'
-        // }
+        if (word[word.length - 1] === 'i') {
+          result = result.substr(0, result.length - 1) + 'a'
+        }
 
         return result
       })
@@ -252,9 +349,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       productStrings.push(name)
     }
     const ingr = productStrings.join(', ')
-    console.log('recipeIngr:' + recipeIngredients.length)
-    console.log('Ingr: ' + recipeFixedIngredients.length)
-    console.log(ingr)
+    console.log('\nZapytanie do API: ' + ingr + '\n')
     const nutrients = await getNutrientsFromString(ingr)
 
     // dodawanie produktow do bazy
@@ -308,7 +403,11 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
           }
         }
 
-        if (!productExist) {
+        if (
+          !productExist &&
+          product.name !== 'Sól cebuli' &&
+          product.name !== 'Czerwony pieprz'
+        ) {
           console.log('Dodaje produkt: ' + product.name)
           await Product.create(product)
           products.push(product)
@@ -323,25 +422,37 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       let productName = recipeFixedIngredients[i].name
 
       try {
+        const products = await Product.find()
+        const options = {
+          includeScore: true,
+          keys: ['name'],
+        }
+
+        const fuse = new Fuse(products, options)
+
+        //let findedProducts = fuse.search(productName)
+
         let findedProducts = await Product.fuzzySearch(productName)
+
         findedProducts = findedProducts.filter((product) => {
-          if (product.name.length > productName.length + 2) return false
+          if (product.name.length > productName.length + 5) return false
           return true
         })
         const findedProduct = findedProducts[0]
 
         if (findedProduct) {
           console.log(
-            recipeFixedIngredients[i].name +
+            recipeIngredients[i].name +
               ' - ' +
               productName +
               ' - ' +
               findedProduct.name +
-              '\n'
+              ' \n'
           )
 
           const recipeIngredientName = recipeIngredients[i].name
             .replace(/^•/, '')
+            .replace('po ', '')
             .trim()
 
           const calculatedIngredientValues = {}
@@ -352,9 +463,17 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
             recipeIngredientName.indexOf(' ml ') > 0 ||
             recipeIngredientName.indexOf(' gramów ') > 0 ||
             recipeIngredientName.indexOf(' gramow') > 0 ||
-            recipeIngredientName.indexOf(' gram ') > 0
+            recipeIngredientName.indexOf(' gram ') > 0 ||
+            recipeIngredientName.indexOf(' gr ') > 0 ||
+            recipeIngredientName.indexOf(' ml ') > 0 ||
+            recipeIngredientName.indexOf(' łyż') > 0
           ) {
-            weight = parseInt(recipeIngredientName)
+            if (recipeIngredientName.indexOf(' łyż') > 0) {
+              weight = parseInt(recipeIngredientName) * 8
+            } else weight = parseInt(recipeIngredientName)
+
+            if (isNaN(weight)) weight = 1
+
             let p = weight / 100
 
             calculatedIngredientValues.kcal =
@@ -406,6 +525,7 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
     const recipeFilteredIngredients = recipeIngredients.filter(
       (recipeIngredient) => {
         if (recipeIngredient.name === '') return false
+        if (recipeIngredient.name.indexOf(':') > 0) return false
         return true
       }
     )
@@ -426,16 +546,6 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       }
     }
 
-    // pobranie ilosci porcji
-    const portions = $("span[class='sprite-responsive cake']", content)
-    let numberOfPortions = 1
-    if (portions['0']) {
-      numberOfPortions = parseInt(portions['0'].next.data)
-      if (!numberOfPortions) {
-        numberOfPortions = 1
-      }
-    }
-
     recipeValues.kcal /= numberOfPortions
     recipeValues.fat /= numberOfPortions
     recipeValues.carbohydrates /= numberOfPortions
@@ -448,78 +558,6 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
     )
     recipeValues.fat = +(Math.round(recipeValues.fat + 'e+2') + 'e-2')
     recipeValues.protein = +(Math.round(recipeValues.protein + 'e+2') + 'e-2')
-
-    // zdjecie
-    const recipeImage = $('.recipe-main-image', content)['0'].attribs.src
-
-    // czas wykonania
-    const additionalInfo = $('.additional-info > ul > li h5', content)
-    let recipeTimeMin = 0
-    if (additionalInfo[0].children.length > 0) {
-      recipeTimeMinString = additionalInfo[0].children[0].data
-      // jezeli podany w godzinach
-      if (recipeTimeMinString[1] === 'h') {
-        recipeTimeMin += parseInt(recipeTimeMinString[0]) * 60
-        recipeTimeMin += parseInt(recipeTimeMinString.slice(2))
-      } else {
-        recipeTimeMin = parseInt(recipeTimeMinString)
-      }
-    }
-
-    // lista krokow
-    const recipeSteps = []
-    const stepsLi = $('.steps-list > li > ol > li', content)
-    for (let i = 0; i < stepsLi.length; i++) {
-      recipeSteps.push(stepsLi[i].children[0].data)
-    }
-    const stepsLi2 = $('.steps-list > li', content)
-    for (let i = 0; i < stepsLi2.length; i++) {
-      recipeSteps.push(stepsLi2[i].children[0].data)
-    }
-    const stepsP = $('.steps-list > li p ', content)
-    for (let i = 0; i < stepsP.length; i++) {
-      recipeSteps.push(stepsP[i].children[0].data)
-    }
-
-    const recipeMappedSteps = []
-    for (let i = 0; i < recipeSteps.length; i++) {
-      if (recipeSteps[i] === undefined) continue
-
-      recipeSteps[i] = recipeSteps[i]
-        .replace('\n', '')
-        .replace(/\d\./, '')
-        .replace('*', '')
-      recipeMappedSteps.push({ name: recipeSteps[i].trim() })
-    }
-
-    const recipeFilteredSteps = recipeMappedSteps.filter((step) => {
-      if (step.name === 'Wpisz tutaj kroki przygotowania przepisu') {
-        return false
-      }
-
-      let empty = true
-      for (i = 0; i < step.name.length; i++) {
-        if (/[a-zA-z]/.test(step.name[i])) {
-          empty = false
-        }
-      }
-      if (empty) {
-        return false
-      }
-
-      return true
-    })
-
-    // TM 31
-    const tm = $(
-      '.appliances-list > ul > li > .media-body > .media-heading',
-      content
-    )
-
-    if (tm['0'].children && tm['0'].children[0].data) {
-      recipeDescription +=
-        '.\nPrzepis jest tworzony dla urządzenia ' + tm['0'].children[0].data
-    }
 
     //tworzenie przepisu
     const recipe = {
@@ -534,6 +572,9 @@ const getRecipeFromPage = async (mainPage, index, recipeType) => {
       values: recipeValues,
       number_of_portions: numberOfPortions,
     }
+
+    console.log(recipe.values)
+
     //await Recipe.create(recipe)
   } catch (e) {
     console.error(e)

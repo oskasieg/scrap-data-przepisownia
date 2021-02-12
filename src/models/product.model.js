@@ -37,7 +37,9 @@ const productSchema = new mongoose.Schema({
   type: String,
 })
 
-productSchema.plugin(mongoose_fuzzy_searching, { fields: ['name'] })
+productSchema.plugin(mongoose_fuzzy_searching, {
+  fields: [{ name: 'name', prefixOnly: true }],
+})
 
 const Product = mongoose.model('product', productSchema)
 

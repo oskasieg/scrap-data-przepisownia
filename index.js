@@ -36,18 +36,16 @@ const scrap = async (endpoint, recipeType) => {
 
     const mainPage = await rp(url + convertedEndpoint)
 
-    //await getRecipeFromPage(mainPage, 1, recipeType)
+    //await getRecipeFromPage(mainPage, 11, recipeType)
 
-    console.log('DODAJE PRZEPISY z ' + endpoint + ' - strona 1')
+    console.log('DODAJE PRZEPISY z ' + endpoint)
     await getRecipesFromPage(mainPage, recipeType)
     // const endpoints = getEndpointsFromPage(mainPage, endpoint)
     // for (let i = 0; i < endpoints.length; i++) {
     //   const anotherPage = await rp(url + endpoints[i])
     //   await getRecipesFromOnePage(anotherPage, recipeType)
     // }
-    console.log(
-      '\n\nZAKONCZONO DODAWAC PRZEPISY Z  ' + endpoint + ' - strona 1'
-    )
+    console.log('\n\nZAKONCZONO DODAWAC PRZEPISY Z  ' + endpoint)
   } catch (e) {
     console.error(e)
   }
@@ -72,19 +70,37 @@ const endpoints = [
 const test = () => {}
 
 const start = () => {
-  scrap(endpoints[7].value, endpoints[7].recipeType)
-
+  scrap(endpoints[0].value, endpoints[0].recipeType)
+  setTimeout(() => {
+    scrap(endpoints[1].value, endpoints[1].recipeType)
+  }, [20 * 60 * 1000])
+  setTimeout(() => {
+    scrap(endpoints[2].value, endpoints[2].recipeType)
+  }, [40 * 60 * 1000])
+  setTimeout(() => {
+    scrap(endpoints[3].value, endpoints[3].recipeType)
+  }, [60 * 60 * 1000])
+  setTimeout(() => {
+    scrap(endpoints[4].value, endpoints[4].recipeType)
+  }, [80 * 60 * 1000])
+  setTimeout(() => {
+    scrap(endpoints[5].value, endpoints[5].recipeType)
+  }, [100 * 60 * 1000])
+  setTimeout(() => {
+    scrap(endpoints[6].value, endpoints[6].recipeType)
+  }, [120 * 60 * 1000])
+  setTimeout(() => {
+    scrap(endpoints[7].value, endpoints[7].recipeType)
+  }, [140 * 60 * 1000])
   setTimeout(() => {
     scrap(endpoints[8].value, endpoints[8].recipeType)
-  }, 1000 * 60 * 30)
-
+  }, [160 * 60 * 1000])
   setTimeout(() => {
     scrap(endpoints[9].value, endpoints[9].recipeType)
-  }, 1000 * 60 * 60)
-
+  }, [180 * 60 * 1000])
   setTimeout(() => {
     scrap(endpoints[10].value, endpoints[10].recipeType)
-  }, 1000 * 60 * 90)
+  }, [200 * 60 * 1000])
 }
 
 start()
